@@ -1,5 +1,5 @@
-from measure_tool.wildfrag_data import *
-from measure_tool.wildfrag_util import *
+from wildfrag.data import *
+from wildfrag.util import *
 
 
 def count_out_of_order_blocks(file: File):

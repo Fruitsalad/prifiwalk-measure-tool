@@ -1,4 +1,4 @@
-from measure_tool.wildfrag_data import *
+from wildfrag.data import *
 
 
 def __get_false(*ignored):

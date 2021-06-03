@@ -1,5 +1,5 @@
 import argparse
-from measure_tool.wildfrag import WildFrag
+from wildfrag.wildfrag import WildFrag
 from metrics.layout_score import *
 from metrics.out_of_orderness import *
 

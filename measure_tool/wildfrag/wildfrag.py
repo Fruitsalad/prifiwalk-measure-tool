@@ -1,6 +1,6 @@
 import sqlite3
 import os
-from measure_tool.wildfrag_data import *
+from wildfrag.data import *
 
 
 queries = {
