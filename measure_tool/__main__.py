@@ -2,6 +2,8 @@ import argparse
 from wildfrag.wildfrag import WildFrag
 from metrics.layout_score import *
 from metrics.out_of_orderness import *
+from metrics.disk_allocations import *
+from graphs.disk_allocation_chart import draw_sampled_disk_allocation_chart
 
 
 args = None
@@ -49,12 +51,19 @@ def find_worst_layout_score(wildfrag):
 if __name__ == '__main__':
     args = parse_args()
     wildfrag = WildFrag(args.dbfile)
-    system = wildfrag.retrieve_system(179)
-    volume = system.devices[0].volumes[2]
+    system = wildfrag.retrieve_system(16)
+    volume = system.devices[0].volumes[0]
     layout_score = calc_aggregate_layout_score(volume)
     out_of_orderness = calc_aggregate_out_of_orderness(volume)
+    fullness = volume.used / volume.size
+    filecount = len(volume.files)
 
+    print(f"{fullness = :<.4}")
+    print(f"{filecount = }")
     print(f"{layout_score = :<.4}")
     print(f"{out_of_orderness = :<.4}")
+
+    allocs = get_disk_allocations(volume)
+    draw_sampled_disk_allocation_chart(allocs, volume.size)
 
     find_worst_layout_score(wildfrag)

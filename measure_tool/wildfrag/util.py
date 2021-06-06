@@ -56,3 +56,8 @@ def normalize_block_ranges(block_ranges: list):
         block_ranges.pop(removed_index)
 
     return block_ranges
+
+
+def parse_and_normalize_block_ranges(blocks_str: str):
+    """ Tiny helper function. This is usually what you want. """
+    return normalize_block_ranges(parse_block_ranges(blocks_str))

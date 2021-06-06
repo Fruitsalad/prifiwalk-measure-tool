@@ -26,7 +26,7 @@ class WildFrag:
 
         self.__connect()
         # Integrity checks take a very long time on the full WildFrag DB
-        # and usually there's no issues.
+        # and so far there haven't been any integrity issues.
         #self.__check_integrity()
 
     def __connect(self):
@@ -81,7 +81,7 @@ class WildFrag:
                 row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7]
             ))
 
-        # Find the files of each device...
+        # Find the files of each volume...
         # This is in a separate for-loop because it also uses the DB cursor.
         for volume in volumes:
             volume.files = self.__retrieve_files(volume.id)

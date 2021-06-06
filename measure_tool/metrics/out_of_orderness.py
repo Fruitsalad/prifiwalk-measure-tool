@@ -5,7 +5,7 @@ from wildfrag.util import *
 def count_out_of_order_blocks(file: File):
     # Parse the block ranges...
     assert (file.blocks is not None)
-    block_ranges = normalize_block_ranges(parse_block_ranges(file.blocks))
+    block_ranges = parse_and_normalize_block_ranges(file.blocks)
     assert (len(block_ranges) > 1)
     assert (len(block_ranges) == file.num_gaps + 1)
 
