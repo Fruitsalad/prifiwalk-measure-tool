@@ -1,4 +1,6 @@
 import argparse
+from matplotlib import pyplot
+
 from wildfrag.wildfrag import WildFrag
 from metrics.layout_score import *
 from metrics.out_of_orderness import *
@@ -48,10 +50,43 @@ def find_worst_layout_score(wildfrag):
           f"ON SYS {wls_system} DEV {wls_device} VOL {wls_volume}")
 
 
+def draw_many_disk_allocation_charts(
+        volumes: list, names=None, folder="./disk allocations"
+):
+    if names is None:
+        names = []
+
+    for i, volume in enumerate(volumes):
+        allocs = get_disk_allocations(volume)
+        figure = draw_sampled_disk_allocation_chart(allocs, volume.size, 2000)
+
+        if i < len(names):
+            name = names[i]
+        else:
+            name = f"chart_{i}"
+
+        file = f"{folder}/{name}"
+
+        pyplot.savefig(file)
+
+
+def get_volume(wildfrag, system, device, volume):
+    return wildfrag.retrieve_system(system).devices[device].volumes[volume]
+
+
 if __name__ == '__main__':
     args = parse_args()
     wildfrag = WildFrag(args.dbfile)
-    system = wildfrag.retrieve_system(16)
+
+    volumes = [
+        get_volume(wildfrag, 16, 0, 0),
+        get_volume(wildfrag, 1, 0, 0),
+        get_volume(wildfrag, 1, 1, 0)
+    ]
+
+    draw_many_disk_allocation_charts(volumes)
+
+    """system = wildfrag.retrieve_system(16)
     volume = system.devices[0].volumes[0]
     layout_score = calc_aggregate_layout_score(volume)
     out_of_orderness = calc_aggregate_out_of_orderness(volume)
@@ -66,4 +101,4 @@ if __name__ == '__main__':
     allocs = get_disk_allocations(volume)
     draw_sampled_disk_allocation_chart(allocs, volume.size)
 
-    find_worst_layout_score(wildfrag)
+    find_worst_layout_score(wildfrag)"""

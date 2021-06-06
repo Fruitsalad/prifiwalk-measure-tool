@@ -15,7 +15,7 @@ def draw_sampled_disk_allocation_chart(allocations, disk_size, samples=4000):
     axes.xaxis.set_visible(False)
     axes.yaxis.set_visible(False)
     axes.set_xlim(0, disk_size)
-    colormap = matplotlib.cm.get_cmap("hsv")  # hsv = rainbow colors
+    colormap = matplotlib.cm.get_cmap("nipy_spectral")  # we use dark colors
 
     # the size of a single sample in bytes
     sample_size = disk_size / samples
@@ -32,12 +32,14 @@ def draw_sampled_disk_allocation_chart(allocations, disk_size, samples=4000):
         # Draw the sample...
         (_, (_, file, part, _)) = found
         # choose a color...
-        color_number = ((file + part) / 1000) % 1.0
+        color_number = (file / 1000) % 1.0
         color = colormap(color_number)
         # draw the rectangle...
         rectangle = Rectangle((location, 0), sample_size, 1,
                               facecolor=color)
         axes.add_patch(rectangle)
+
+    return figure
 
 
 def draw_complete_disk_allocation_chart(disk_allocations, disk_size):
@@ -55,7 +57,7 @@ def draw_complete_disk_allocation_chart(disk_allocations, disk_size):
     axes.yaxis.set_visible(False)
     axes.set_xlim(0, disk_size)
 
-    colormap = matplotlib.cm.get_cmap("hsv")  # hsv = rainbow colors
+    colormap = matplotlib.cm.get_cmap("nipy_spectral")  # we use dark colors
 
     # For each allocation...
     for alloc_start in disk_allocations:
@@ -63,7 +65,7 @@ def draw_complete_disk_allocation_chart(disk_allocations, disk_size):
         alloc_size = alloc_end - alloc_start
 
         # Choose a color...
-        color_number = ((file + part) / 1000) % 1.0
+        color_number = (file / 1000) % 1.0
         color = colormap(color_number)
 
         # Draw a rectangle...
@@ -71,4 +73,4 @@ def draw_complete_disk_allocation_chart(disk_allocations, disk_size):
                               facecolor=color)
         axes.add_patch(rectangle)
 
-    pyplot.show()
+    return figure
