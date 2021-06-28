@@ -15,9 +15,9 @@ class DiskAllocations:
     """
     An example of a possible value of `allocations`:
         allocations: {
-            0: { end: 64, file: 1, part: 0 },
-            64: { end: 96, file: 21, part: 0 },
-            1028: { end: 1528, file: 1, part: 1 }
+            0: { end: 64, file: 1, part: 0, alloc_type: ALLOC_FILE },
+            64: { end: 96, file: 21, part: 0, alloc_type: ALLOC_FILE },
+            1028: { end: 1528, file: 1, part: 1, alloc_type: ALLOC_FILE }
         }
     """
     allocations: SortedDict
@@ -87,8 +87,11 @@ def get_disk_allocations(volume: Volume):
     for file_id, file in enumerate(volume.files):
         byte_ranges = parse_and_normalize_block_ranges(file.blocks)
         for part_number, byte_range in enumerate(byte_ranges):
-            # Skip empty byte ranges (this actually occurs in WildFrag)
-            if byte_range[0] != byte_range[1]:
+            # Skip empty byte ranges (this actually occurs in WildFrag) and
+            # skip ranges that are already occupied (this also actually occurs).
+            # Examples of overlapping ranges: file 13005187 and 13171573
+            if byte_range[0] != byte_range[1]\
+               and not allocs.is_range_occupied(byte_range[0], byte_range[1]):
                 allocs.add(byte_range[0], byte_range[1], file_id, part_number)
 
     return allocs
