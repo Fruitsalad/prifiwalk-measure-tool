@@ -5,8 +5,8 @@ from matplotlib.patches import Rectangle
 
 
 def draw_sampled_disk_allocation_chart(allocations, disk_size, samples=4000):
-    """ Draw a disk allocation chart. This takes `samples` samples of the disk
-    allocation chart and draws a rectangle for each sample. """
+    """ Draw a disk allocation chart. This takes a number of samples of disk
+    allocations and draws a rectangle for each sample. """
 
     # Note that this does not merge rectangles together when two samples are
     # within the same allocation, so it's not perfectly optimized.
@@ -46,8 +46,8 @@ def draw_complete_disk_allocation_chart(disk_allocations, disk_size):
     """
     This draws a complete disk allocation chart. The problem with that is that
     it will contain several hundreds of thousands of rectangles which will take
-    matplotlib quite a while to render. Fortunately, it doesn't use an
-    unreasonable amount of memory (it uses about 6 GB last I tried).
+    matplotlib quite a while to render. Running this requires about 6 GB of
+    memory last I tried.
 
     In practice, the level of detail of this isn't any better than the sampled
     version, so you should really just use the sampled version.
