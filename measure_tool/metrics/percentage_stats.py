@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from metrics.out_of_orderness import count_out_of_order_blocks
 
 
 @dataclass
@@ -14,6 +15,10 @@ class VolumeStats:
     files_with_blocks = 0
     files_without_blocks = 0
     total_blocks = 0
+    num_gaps = 0
+    sum_gap_sizes = 0
+    backwards_gaps = 0
+    out_of_order_gaps = 0
     
     def add(self, other):
         self.total_files += other.total_files
@@ -27,24 +32,30 @@ class VolumeStats:
         self.files_with_blocks = other.files_with_blocks
         self.files_without_blocks = other.files_without_blocks
         self.total_blocks = other.total_blocks
+        self.num_gaps = other.num_gaps
+        self.sum_gap_sizes = other.sum_gap_sizes
+        self.backwards_gaps = other.backwards_gaps
 
-    def stringify(self):
+    def pretty_print(self):
         return (f"{self.total_files=}\n"
-                f"{self.fraggable_files =}\n"
-                f"{self.fragmented_files =}\n"
-                f"{self.empty_files =}\n"
-                f"{self.resident_files =}\n"
-                f"{self.sparse_files =}\n"
-                f"{self.compressed_files =}\n"
-                f"{self.hardlinks =}\n"
-                f"{self.files_with_blocks =}\n"
-                f"{self.files_without_blocks =}\n"
-                f"{self.total_blocks =}\n")
+                f"{self.fraggable_files=}\n"
+                f"{self.fragmented_files=}\n"
+                f"{self.empty_files=}\n"
+                f"{self.resident_files=}\n"
+                f"{self.sparse_files=}\n"
+                f"{self.compressed_files=}\n"
+                f"{self.hardlinks=}\n"
+                f"{self.files_with_blocks=}\n"
+                f"{self.files_without_blocks=}\n"
+                f"{self.total_blocks=}\n"
+                f"{self.num_gaps=}\n"
+                f"{self.sum_gap_sizes=}\n"
+                f"{self.backwards_gaps=}\n")
 
 
 def calc_various_stats(files):
-    filetypes = {"[filtered]": VolumeStats}
-    all_files = VolumeStats
+    filetypes = {"[filtered]": VolumeStats()}
+    all_files = VolumeStats()
     all_files.total_files = len(files)
 
     for file in files:
@@ -91,6 +102,14 @@ def calc_various_stats(files):
             if file.num_blocks > 1:
                 all_files.fraggable_files += 1
                 this_type.fraggable_files += 1
+            if file.num_gaps >= 1:
+                all_files.num_gaps += file.num_gaps
+                this_type.num_gaps += file.num_gaps
+                all_files.sum_gap_sizes += file.sum_gaps_bytes
+                this_type.sum_gap_sizes += file.sum_gaps_bytes
+                out_of_order_gaps = count_out_of_order_blocks(file)
+                all_files.backwards_gaps += out_of_order_gaps
+                this_type.backwards_gaps += out_of_order_gaps
 
     return all_files, filetypes
 
