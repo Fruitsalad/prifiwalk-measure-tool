@@ -1,4 +1,5 @@
 from sortedcontainers import SortedDict, SortedKeysView
+import unittest
 
 
 class Bins:
@@ -33,3 +34,39 @@ class Bins:
 
         # Put the value in the bin...
         self.bins.peekitem(index=key_index)[1].append(value)
+
+    def pretty_print(self):
+        result = ""
+
+        for category, values in self.bins.items():
+            result += f"{category} | {len(values)} |   {values}\n"
+
+        return result
+
+
+class __Tests(unittest.TestCase):
+    bins: Bins
+
+    def setUp(self):
+        self.bins = Bins([5, 10, 12, 40, 50])
+        self.bins.add(4)
+        self.bins.add(11)
+        self.bins.add(4)
+        self.bins.add(12)
+        self.bins.add(39)
+        self.bins.add(50)
+        self.bins.add(100)
+        self.bins.add(-100)
+        self.bins.add(0)
+
+
+    def test__pretty_print(self):
+        result = self.bins.pretty_print()
+        self.assertEqual(result,
+"""\
+5 | 4 |   [4, 4, -100, 0]
+10 | 0 |   []
+12 | 1 |   [11]
+40 | 2 |   [12, 39]
+50 | 2 |   [50, 100]
+""")
