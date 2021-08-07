@@ -70,9 +70,6 @@ class File:
     fs_seq: int
     fs_nlink: int
     fs_inode: int
-    # This is populated only if this is a hardlinked file.
-    # If this is not None, `extension` is the same as this list's first element.
-    hardlink_extensions: list = None
 
 
 @dataclass
