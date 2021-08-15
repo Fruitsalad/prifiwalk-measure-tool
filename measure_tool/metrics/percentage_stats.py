@@ -4,21 +4,23 @@ from metrics.out_of_orderness import count_out_of_order_blocks
 
 @dataclass
 class VolumeStats:
+    # Note: Type annotations are not optional here.
+    # dataclass-csv doesn't recognize variables without a type annotation (for
+    # some reason) and won't include them in the .csv if you leave it out.
     total_files: int = 0
-    fraggable_files = 0
-    fragmented_files = 0
-    empty_files = 0
-    resident_files = 0
-    sparse_files = 0
-    compressed_files = 0
-    hardlinks = 0
-    files_with_blocks = 0
-    files_without_blocks = 0
-    total_blocks = 0
-    num_gaps = 0
-    sum_gap_sizes = 0
-    backwards_gaps = 0
-    out_of_order_gaps = 0
+    fraggable_files: int = 0
+    fragmented_files: int = 0
+    empty_files: int = 0
+    resident_files: int = 0
+    sparse_files: int = 0
+    compressed_files: int = 0
+    hardlinks: int = 0
+    files_with_blocks: int = 0
+    files_without_blocks: int = 0
+    total_blocks: int = 0
+    num_gaps: int = 0
+    sum_gap_sizes: int = 0
+    backwards_gaps: int = 0
     
     def add(self, other):
         self.total_files += other.total_files
@@ -112,6 +114,3 @@ def calc_various_stats(files):
                 this_type.backwards_gaps += out_of_order_gaps
 
     return all_files, filetypes
-
-
-
