@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from metrics.out_of_orderness import count_out_of_order_blocks
+from metrics.out_of_orderness import count_out_of_order_gaps
 
 
 @dataclass
@@ -109,7 +109,7 @@ def calc_various_stats(files):
                 this_type.num_gaps += file.num_gaps
                 all_files.sum_gap_sizes += file.sum_gaps_bytes
                 this_type.sum_gap_sizes += file.sum_gaps_bytes
-                out_of_order_gaps = count_out_of_order_blocks(file)
+                out_of_order_gaps = count_out_of_order_gaps(file)
                 all_files.backwards_gaps += out_of_order_gaps
                 this_type.backwards_gaps += out_of_order_gaps
 
