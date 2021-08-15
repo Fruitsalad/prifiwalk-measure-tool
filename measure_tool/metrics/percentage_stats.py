@@ -39,6 +39,7 @@ class VolumeStats:
         self.backwards_gaps = other.backwards_gaps
 
     def pretty_print(self):
+        # To be honest the outputs of this aren't all that pretty.
         return (f"{self.total_files=}\n"
                 f"{self.fraggable_files=}\n"
                 f"{self.fragmented_files=}\n"
@@ -56,6 +57,9 @@ class VolumeStats:
 
 
 def calc_various_stats(files):
+    """ Derives VolumeStats from the given collection of files.
+        Return both a VolumeStats for the whole system and a dictionary
+        of VolumeStats for each individual filetype. """
     filetypes = {"[filtered]": VolumeStats()}
     all_files = VolumeStats()
     all_files.total_files = len(files)

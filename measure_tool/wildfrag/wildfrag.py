@@ -3,6 +3,9 @@ import os
 from wildfrag.data import *
 
 
+# Hindsight note: I took the idea to put this in a dict from some other
+# WildFrag code project, but in hindsight just making a constant for each
+# query would have been both more simple and more efficient.
 queries = {
     "retrieve system ids": "SELECT id FROM Systems;",
     "retrieve system": "SELECT * FROM Systems WHERE id = ?;",

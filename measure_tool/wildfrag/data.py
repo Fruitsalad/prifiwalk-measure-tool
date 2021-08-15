@@ -40,8 +40,6 @@ class Volume:
     notes: list = field(default_factory=list)
 
 
-# NOTE: Files are different from the raw WildFrag data because the WildFrag
-# class normalizes all hardlink references to the same file into one File.
 @dataclass
 class File:
     id: int

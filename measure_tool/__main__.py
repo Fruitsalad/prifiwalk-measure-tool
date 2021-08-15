@@ -43,6 +43,9 @@ def parse_args():
 
 
 def get_each_volume(wildfrag):
+    """ Iterate through all the volumes in the given database.
+        This returns the datastructures `volume`, `system`, `device`
+        and the indices `i_volume`, `i_system`, `i_device` """
     for (i_system,) in wildfrag.retrieve_system_ids():
         system = wildfrag.retrieve_system(i_system)
 
@@ -54,6 +57,9 @@ def get_each_volume(wildfrag):
 def draw_many_disk_allocation_charts(
         volumes: list, names=None, folder="./disk allocations"
 ):
+    """ Draw a disk allocation chart for each given volume. """
+    # This function is unused but I can't bring myself to delete it.
+
     if names is None:
         names = []
 
@@ -71,13 +77,14 @@ def draw_many_disk_allocation_charts(
         pyplot.savefig(file)
 
 
-def calc_aggregate_layout_score_2(stats):
+def calc_aggregate_layout_score_2(stats: VolumeStats):
+    # Note: `_2` to prevent collision with the function in `layout_score.py`
     if stats.total_blocks <= stats.files_with_blocks:
         return 1
     return 1.0 - (stats.num_gaps / (stats.total_blocks - stats.files_with_blocks))
 
 
-def calc_out_of_orderness(stats):
+def calc_out_of_orderness(stats: VolumeStats):
     if stats.num_gaps == 0:
         return 0
     return stats.backwards_gaps / stats.num_gaps
@@ -88,8 +95,8 @@ def derive_fullness(volume):
         return volume.used / volume.size
     else:
         # This is not perfectly accurate, since it's only counting files
-        # and not filesystem metadata, but it's the best we can do and probably
-        # not all that bad.
+        # and not filesystem metadata, which also takes up space, but it's the
+        # best we can do and probably not all that bad.
         sum_file_sizes = 0
         for file in volume.files:
             if file.size is not None:
@@ -98,6 +105,10 @@ def derive_fullness(volume):
 
 
 def print_statistics(wildfrag):
+    """ Print a bunch of statistics on the commandline.
+        If you want to import the outputs into Excel or Calc you should
+        paste it into a code editor and run a regex to filter out
+        the variable names. """
     for volume, _, _, i_vol, i_sys, i_dev in get_each_volume(wildfrag):
         size_in_GB = volume.size / 1_000_000_000
         fullness = derive_fullness(volume)
