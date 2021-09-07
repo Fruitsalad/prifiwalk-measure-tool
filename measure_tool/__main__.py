@@ -10,6 +10,7 @@ from metrics.out_of_orderness import *
 from metrics.disk_allocations import *
 from metrics.percentage_stats import *
 from metrics.free_space_extents import *
+from metrics.internal_fragmentation import *
 from graphs.disk_allocation_chart import *
 from graphs.histogram import *
 
@@ -84,24 +85,33 @@ def calc_aggregate_layout_score_2(stats: VolumeStats):
     return 1.0 - (stats.num_gaps / (stats.total_blocks - stats.files_with_blocks))
 
 
-def calc_out_of_orderness(stats: VolumeStats):
+def calc_aggregate_out_of_orderness(stats: VolumeStats):
     if stats.num_gaps == 0:
         return 0
     return stats.backwards_gaps / stats.num_gaps
 
 
+def calc_avg_out_of_orderness(files: list):
+    sum_ooo = 0
+    fragmented_files = 0
+
+    for file in files:
+        if file.num_gaps is not None and file.num_gaps > 1:
+            fragmented_files += 1
+            ooo = file.num_backward / file.num_gaps
+            sum_ooo += ooo
+
+    if fragmented_files == 0:
+        return 0
+
+    return sum_ooo / fragmented_files
+
+
 def derive_fullness(volume):
-    if volume.used is not None:
-        return volume.used / volume.size
-    else:
-        # This is not perfectly accurate, since it's only counting files
-        # and not filesystem metadata, which also takes up space, but it's the
-        # best we can do and probably not all that bad.
-        sum_file_sizes = 0
-        for file in volume.files:
-            if file.size is not None:
-                sum_file_sizes += file.size
-        return sum_file_sizes / volume.size
+    # We used to estimate the fullness when volume.used was None, but the
+    # estimates turned out to be rather inaccurate (4 GB inaccurate on average)
+    assert volume.used is not None
+    return volume.used / volume.size
 
 
 def print_statistics(wildfrag):
@@ -116,7 +126,9 @@ def print_statistics(wildfrag):
         # Generate statistics...
         general_stats, filetype_stats = calc_various_stats(volume.files)
         layout_score = calc_aggregate_layout_score_2(general_stats)
-        out_of_orderness = calc_out_of_orderness(general_stats)
+        aggregate_ooo = calc_aggregate_out_of_orderness(general_stats)
+        average_ooo = calc_avg_out_of_orderness(volume.files)
+        avg_internal_frag = calc_avg_internal_frag(volume.files)
 
         gap_size_avg = 0
         if general_stats.num_gaps != 0:
@@ -126,12 +138,13 @@ def print_statistics(wildfrag):
         normalized_gap_size_avg = gap_size_avg / volume.size
 
         print(f"Volume {i_vol} (System {i_sys}, device {i_dev})")
-        print("Size in GB, fullness, layout score, out of orderness, normalized gap size avg.:")
-        print(size_in_GB)  # Putting each result on its own line makes it
-        print(fullness)  # easier to copy paste them into LibreOffice Calc
-        print(layout_score)
-        print(out_of_orderness)
-        print(normalized_gap_size_avg)
+        print(f"{size_in_GB=}")
+        print(f"{fullness=}")
+        print(f"{layout_score=}")
+        print(f"{aggregate_ooo=}")
+        print(f"{normalized_gap_size_avg=}")
+        print(f"{average_ooo=}")
+        print(f"{avg_internal_frag=}")
 
         print(general_stats.pretty_print())
         if is_measuring_filetype_stats:
@@ -159,9 +172,11 @@ def generate_csv_files(wildfrag):
 
         main_csv.writerow(["volume", "system", "device", "HDD", "fs type",
                            "size in GB", "fullness",
-                           "aggregate layout score", "out of orderness",
+                           "aggregate layout score", "aggregate out of orderness",
                            "gap size average",
-                           "normalized gap size average"])
+                           "normalized gap size average",
+                           "average internal fragmentation",
+                           "average out of orderness"])
 
         misc_stats_list = []
 
@@ -171,7 +186,9 @@ def generate_csv_files(wildfrag):
             fullness = derive_fullness(volume)
             misc_stats, filetype_stats = calc_various_stats(volume.files)
             layout_score = calc_aggregate_layout_score_2(misc_stats)
-            out_of_orderness = calc_out_of_orderness(misc_stats)
+            aggregate_ooo = calc_aggregate_out_of_orderness(misc_stats)
+            average_ooo = calc_avg_out_of_orderness(volume.files)
+            avg_internal_frag = calc_avg_internal_frag(volume.files)
 
             gap_size_avg = 0
             if misc_stats.num_gaps != 0:
@@ -186,7 +203,8 @@ def generate_csv_files(wildfrag):
             main_csv.writerow(
                 (volume.id, system.id, device.id, is_hdd, volume.fs_type,
                  size_in_GB, fullness, layout_score,
-                 out_of_orderness, gap_size_avg, normalized_gap_size_avg)
+                 aggregate_ooo, gap_size_avg, normalized_gap_size_avg,
+                 avg_internal_frag, average_ooo)
             )
             misc_stats_list.append(misc_stats)
 
