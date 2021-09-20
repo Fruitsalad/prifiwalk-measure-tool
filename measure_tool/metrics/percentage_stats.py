@@ -21,22 +21,7 @@ class VolumeStats:
     num_gaps: int = 0
     sum_gap_sizes: int = 0
     backwards_gaps: int = 0
-    
-    def add(self, other):
-        self.total_files += other.total_files
-        self.fraggable_files = other.fraggable_files
-        self.fragmented_files = other.fragmented_files
-        self.empty_files = other.empty_files
-        self.resident_files = other.resident_files
-        self.sparse_files = other.sparse_files
-        self.compressed_files = other.compressed_files
-        self.hardlinks = other.hardlinks
-        self.files_with_blocks = other.files_with_blocks
-        self.files_without_blocks = other.files_without_blocks
-        self.total_blocks = other.total_blocks
-        self.num_gaps = other.num_gaps
-        self.sum_gap_sizes = other.sum_gap_sizes
-        self.backwards_gaps = other.backwards_gaps
+    sum_file_sizes: int = 0
 
     def pretty_print(self):
         # To be honest the outputs of this aren't all that pretty.
@@ -53,7 +38,8 @@ class VolumeStats:
                 f"{self.total_blocks=}\n"
                 f"{self.num_gaps=}\n"
                 f"{self.sum_gap_sizes=}\n"
-                f"{self.backwards_gaps=}\n")
+                f"{self.backwards_gaps=}\n"
+                f"{self.sum_file_sizes=}\n")
 
 
 def calc_various_stats(files):
@@ -72,6 +58,10 @@ def calc_various_stats(files):
 
         this_type.total_files += 1
 
+        if file.size is not None:
+            all_files.sum_file_sizes += file.size
+            this_type.sum_file_sizes += file.size
+
         if file.fragmented:
             all_files.fragmented_files += 1
             this_type.fragmented_files += 1
@@ -80,7 +70,7 @@ def calc_various_stats(files):
             all_files.sparse_files += 1
             this_type.sparse_files += 1
 
-        if file.size is None or file.size == 0:
+        if file.size is not None and file.size == 0:
             all_files.empty_files += 1
             this_type.empty_files += 1
 

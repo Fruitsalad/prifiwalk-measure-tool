@@ -1,3 +1,15 @@
+def get_each_volume(wildfrag):
+    """ Iterate through all the volumes in the given database.
+        This returns the datastructures `volume`, `system`, `device`
+        and the indices `i_volume`, `i_system`, `i_device` """
+    for (i_system,) in wildfrag.retrieve_system_ids():
+        system = wildfrag.retrieve_system(i_system)
+
+        for i_device, device in enumerate(system.devices):
+            for i_volume, volume in enumerate(device.volumes):
+                yield volume, system, device, i_volume, i_system, i_device
+
+
 def parse_block_ranges(blocks_str: str):
     ranges = []
     current_position = 0

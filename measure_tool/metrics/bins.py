@@ -44,6 +44,42 @@ class Bins:
         return result
 
 
+class CounterBins:
+    """
+    A small modification of bins so it won't remember the values. Instead,
+    each bin is just a counter.
+    """
+    bins: SortedDict
+
+    def __init__(self, bin_categories: list):
+        self.bins = SortedDict()
+        for category in bin_categories:
+            self.bins[category] = [0]  # Count is in a list so it stays mutable
+
+    def __iter__(self):
+        return self.bins.__iter__()
+
+    def __getitem__(self, key):
+        return self.bins.get(key)[0]
+
+    def add(self, value):
+        # Find the appropriate bin...
+        key_index = self.bins.bisect_right(value)
+        if key_index >= len(self.bins):
+            key_index = len(self.bins) - 1
+
+        # Put the value in the bin...
+        self.bins.peekitem(index=key_index)[1][0] += 1
+
+    def pretty_print(self):
+        result = ""
+
+        for category, count in self.bins.items():
+            result += f"{category}: \t{count}\n"
+
+        return result
+
+
 class __Tests(unittest.TestCase):
     bins: Bins
 

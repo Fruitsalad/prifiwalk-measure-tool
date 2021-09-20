@@ -5,12 +5,13 @@ import gc
 
 from dataclass_csv import DataclassWriter
 
+from wildfrag.util import *
 from wildfrag.wildfrag import WildFrag
-from metrics.out_of_orderness import *
 from metrics.disk_allocations import *
-from metrics.percentage_stats import *
 from metrics.free_space_extents import *
 from metrics.internal_fragmentation import *
+from metrics.out_of_orderness import *
+from metrics.percentage_stats import *
 from graphs.disk_allocation_chart import *
 from graphs.histogram import *
 
@@ -19,6 +20,10 @@ VolumeTriplet = namedtuple("VolumeTriplet", ["system", "device", "volume"])
 
 MODE_STATISTICS = "statistics"
 MODE_CSV = "csv"
+# Secret mode for getting a list of all file sizes in a database. This is useful
+# for deriving filesize distributions, which several artificial aging tools take
+# as an argument.
+MODE_FILE_SIZES = "filesizes"
 
 parser = argparse.ArgumentParser()
 args = None
@@ -43,16 +48,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def get_each_volume(wildfrag):
-    """ Iterate through all the volumes in the given database.
-        This returns the datastructures `volume`, `system`, `device`
-        and the indices `i_volume`, `i_system`, `i_device` """
-    for (i_system,) in wildfrag.retrieve_system_ids():
-        system = wildfrag.retrieve_system(i_system)
 
-        for i_device, device in enumerate(system.devices):
-            for i_volume, volume in enumerate(device.volumes):
-                yield volume, system, device, i_volume, i_system, i_device
 
 
 def draw_many_disk_allocation_charts(
@@ -121,7 +117,10 @@ def print_statistics(wildfrag):
         the variable names. """
     for volume, _, _, i_vol, i_sys, i_dev in get_each_volume(wildfrag):
         size_in_GB = volume.size / 1_000_000_000
-        fullness = derive_fullness(volume)
+
+        fullness = None
+        if volume.used:
+            fullness = derive_fullness(volume)
 
         # Generate statistics...
         general_stats, filetype_stats = calc_various_stats(volume.files)
@@ -154,12 +153,17 @@ def print_statistics(wildfrag):
         gc.collect()
 
 
-def generate_csv_files(wildfrag):
-    # A "unique" identifier for each run of the program, so that old files
-    # aren't overwritten when you run the program a second time.
-    run_uid = f"{datetime.datetime.now():%y-%-m-%-d-%-H-%M-%S}"
+def generate_uid():
+    """ This generates a "unique" identifier for each run of the program, which
+        is used for folder names so that old generated files aren't overwritten
+        when you run the program a second time. The generated "uid" is not
+        actually unique but it's good enough for the purposes of this program.
+    """
+    return f"{datetime.datetime.now():%y-%-m-%-d-%-H-%M-%S}"
 
-    main_dir = f"./results/{run_uid}/"
+
+def generate_csv_files(wildfrag):
+    main_dir = f"./results/{generate_uid()}/"
     makedirs(main_dir, exist_ok=True)
     # Todo: filetype statistics
 
@@ -171,7 +175,7 @@ def generate_csv_files(wildfrag):
         main_csv = csv.writer(main_csv_file)
 
         main_csv.writerow(["volume", "system", "device", "HDD", "fs type",
-                           "size in GB", "fullness",
+                           "size in GB", "used space in GB", "fullness",
                            "aggregate layout score", "aggregate out of orderness",
                            "gap size average",
                            "normalized gap size average",
@@ -183,7 +187,13 @@ def generate_csv_files(wildfrag):
         for volume, system, device, _, _, _ in get_each_volume(wildfrag):
             # Generate statistics...
             size_in_GB = volume.size / 1_000_000_000
-            fullness = derive_fullness(volume)
+
+            used_space_in_GB = None
+            fullness = None
+            if volume.used is not None:
+                used_space_in_GB = volume.used / 1_000_000_000
+                fullness = derive_fullness(volume)
+
             misc_stats, filetype_stats = calc_various_stats(volume.files)
             layout_score = calc_aggregate_layout_score_2(misc_stats)
             aggregate_ooo = calc_aggregate_out_of_orderness(misc_stats)
@@ -202,7 +212,7 @@ def generate_csv_files(wildfrag):
             # Store data...
             main_csv.writerow(
                 (volume.id, system.id, device.id, is_hdd, volume.fs_type,
-                 size_in_GB, fullness, layout_score,
+                 size_in_GB, used_space_in_GB, fullness, layout_score,
                  aggregate_ooo, gap_size_avg, normalized_gap_size_avg,
                  avg_internal_frag, average_ooo)
             )
@@ -210,6 +220,23 @@ def generate_csv_files(wildfrag):
 
         misc_csv = DataclassWriter(misc_csv_file, misc_stats_list, VolumeStats)
         misc_csv.write()
+
+
+def generate_file_sizes_csv(wildfrag):
+    """ Generate a CSV file that contains a huge list of all file sizes in the
+        given database. """
+    main_dir = f"./results/{generate_uid()}/"
+    makedirs(main_dir, exist_ok=True)
+    csv_path = f"{main_dir}/filesizes.csv"
+
+    with open(csv_path, 'w') as csv_file:
+        csv_writer = csv.writer(csv_file)
+        csv_writer.writerow(["filesize"])
+
+        for volume, _, _, _, _, _ in get_each_volume(wildfrag):
+            for file in volume.files:
+                if file.size is not None:
+                    csv_writer.writerow([file.size])
 
 
 if __name__ == '__main__':
@@ -226,6 +253,10 @@ if __name__ == '__main__':
     elif args.mode == MODE_CSV:
         wildfrag = WildFrag(args.dbfile)
         generate_csv_files(wildfrag)
+    elif args.mode == MODE_FILE_SIZES:
+        # Secret mode of operation. See the comment near MODE_FILE_SIZES.
+        wildfrag = WildFrag(args.dbfile)
+        generate_file_sizes_csv(wildfrag)
     else:
         print("Error: You did not provide a valid argument for the mode of " +
               "operation.")
